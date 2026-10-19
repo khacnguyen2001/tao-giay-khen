@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tạo giấy khen hàng loạt</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">🏅</div>
+      <div>
+        <h1>Tạo giấy khen hàng loạt</h1>
+        <p>Danh sách Excel → giấy khen PNG đặt tên theo mã học sinh</p>
+      </div>
+    </div>
+    <div class="top-status">
+      <span class="pill pill-wait" id="fontStatus">Đang tải font…</span>
+      <span class="pill pill-ok" title="Không có dữ liệu nào được gửi lên máy chủ">🔒 Xử lý 100% trên máy của bạn</span>
+    </div>
+  </header>
+
+  <ol class="steps" aria-label="Quy trình">
+    <li data-step="excel">Tải Excel</li>
+    <li data-step="frame">Tải khung gốc</li>
+    <li data-step="ref">Tải ảnh mẫu</li>
+    <li data-step="list">Đọc danh sách</li>
+    <li data-step="test">Tạo thử &amp; kiểm tra</li>
+    <li data-step="done">Tạo toàn bộ &amp; tải ZIP</li>
+  </ol>
+
+  <main class="layout">
+    <div class="col col-left">
+
+      <!-- ============ KHU VỰC A ============ -->
+      <section class="card" id="secA">
+        <div class="card-head">
+          <span class="badge">A</span>
+          <h2>Tải file đầu vào</h2>
+        </div>
+
+        <div class="dropzone" id="dzExcel">
+          <input type="file" id="fileExcel" accept=".xlsx,.xls" hidden>
+          <div class="dz-icon" aria-hidden="true">📊</div>
+          <div class="dz-body">
+            <div class="dz-title">1. Danh sách học sinh (Excel)</div>
+            <div class="dz-file" id="excelName">Chưa chọn file · .xlsx, .xls</div>
+          </div>
+          <button class="btn btn-sm" type="button" data-pick="fileExcel" id="pickExcel">Chọn file</button>
+        </div>
+
+        <div class="dropzone" id="dzFrame">
+          <input type="file" id="fileFrame" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" hidden>
+          <div class="dz-thumb" id="frameThumb" aria-hidden="true">🖼️</div>
+          <div class="dz-body">
+            <div class="dz-title">2. Ảnh khung giấy khen gốc <small>(chưa có tên)</small></div>
+            <div class="dz-file" id="frameName">Chưa chọn file · .png, .jpg, .webp</div>
+          </div>
+          <button class="btn btn-sm" type="button" data-pick="fileFrame" id="pickFrame">Chọn file</button>
+        </div>
+
+        <div class="dropzone" id="dzRef">
+          <input type="file" id="fileRef" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" hidden>
+          <div class="dz-thumb" id="refThumb" aria-hidden="true">🔍</div>
+          <div class="dz-body">
+            <div class="dz-title">3. Ảnh mẫu đã có tên <small>(chỉ để tham chiếu)</small></div>
+            <div class="dz-file" id="refName">Chưa chọn file · .png, .jpg, .webp</div>
+          </div>
+          <button class="btn btn-sm" type="button" data-pick="fileRef" id="pickRef">Chọn file</button>
+        </div>
+        <p class="hint">Bạn có thể kéo &amp; thả file vào từng ô. Ảnh mẫu chỉ dùng để xác định vị trí tên, <b>không</b> dùng làm nền cho ảnh xuất.</p>
+
+        <div id="excelOptions" class="subpanel hidden">
+          <h3>Cấu hình đọc Excel</h3>
+          <div class="form-grid">
+            <label for="sheetSelect">Trang tính (sheet)</label>
+            <select id="sheetSelect"></select>
+
+            <label class="span2 check"><input type="checkbox" id="hasHeader" checked> Dòng đầu tiên là tiêu đề cột</label>
+
+            <label for="codeCol">Cột mã học sinh</label>
+            <select id="codeCol"></select>
+
+            <label for="nameCol">Cột tên học sinh</label>
+            <select id="nameCol"></select>
+          </div>
+          <div class="sample-rows" id="sampleRows"></div>
+          <button class="btn btn-primary btn-block" type="button" id="btnReadList">📋 Đọc danh sách học sinh</button>
+        </div>
+      </section>
+
+      <!-- ============ KHU VỰC B ============ -->
+      <section class="card" id="secB">
+        <div class="card-head">
+          <span class="badge">B</span>
+          <h2>Cấu hình tên học sinh</h2>
+        </div>
+        <fieldset id="cfgFieldset">
+          <div class="form-grid">
+            <label>Font chữ</label>
+            <div class="font-sample" id="fontSample">Playfair Display Bold Italic</div>
+
+            <label for="cfgSize">Cỡ chữ (px)</label>
+            <div class="inline">
+              <input type="number" id="cfgSize" min="8" max="500" step="1">
+              <input type="range" id="cfgSizeRange" min="10" max="200" step="1">
+            </div>
+            <div class="span2 note" id="sizeNote">Mặc định 114 px — tính theo pixel trên ảnh gốc (không phải point).</div>
+
+            <label for="cfgColor">Màu chữ</label>
+            <div class="inline">
+              <input type="color" id="cfgColor">
+              <input type="text" id="cfgColorText" maxlength="7" spellcheck="false" class="mono">
+            </div>
+            <div class="span2 note warn hidden" id="colorWarn"></div>
+
+            <label for="cfgX">Vị trí X (px)</label>
+            <div class="inline">
+              <input type="number" id="cfgX" step="1">
+              <button type="button" class="btn btn-sm" id="btnCenterX" title="Đặt X vào giữa chiều ngang ảnh">↔ Giữa ảnh</button>
+            </div>
+
+            <label for="cfgY">Vị trí Y (px)</label>
+            <div class="inline">
+              <input type="number" id="cfgY" step="1">
+              <button type="button" class="btn btn-sm" id="btnCenterY" title="Đặt Y vào giữa chiều dọc ảnh">↕ Giữa ảnh</button>
+            </div>
+
+            <label>Căn ngang</label>
+            <div class="segmented" role="radiogroup">
+              <label><input type="radio" name="align" value="left"><span>Trái</span></label>
+              <label><input type="radio" name="align" value="center"><span>Giữa</span></label>
+              <label><input type="radio" name="align" value="right"><span>Phải</span></label>
+            </div>
+
+            <label>Căn dọc</label>
+            <div class="segmented" role="radiogroup">
+              <label><input type="radio" name="valign" value="middle"><span>Giữa chữ</span></label>
+              <label><input type="radio" name="valign" value="baseline"><span>Chân chữ</span></label>
+            </div>
+            <div class="span2 note">X, Y là điểm neo của tên. “Căn giữa ngang” = tâm tên nằm tại X. “Giữa chữ” = Y nằm giữa chiều cao chữ hoa, giúp mọi tên có cùng đường chân chữ.</div>
+
+            <label for="cfgMaxWidth">Độ rộng tối đa vùng tên (px)</label>
+            <input type="number" id="cfgMaxWidth" min="10" step="1">
+
+            <label class="span2 check"><input type="checkbox" id="cfgAutoShrink"> Tự thu nhỏ tên quá dài (có thông báo từng trường hợp)</label>
+            <label for="cfgMinSize" class="indent">Cỡ chữ nhỏ nhất (px)</label>
+            <input type="number" id="cfgMinSize" min="8" step="1">
+          </div>
+
+          <div class="subpanel">
+            <h3>Dò vị trí từ ảnh mẫu</h3>
+            <p class="note" id="detectInfo">Tải ảnh khung gốc và ảnh mẫu có tên để tự xác định vị trí tên.</p>
+            <div class="btn-row">
+              <button type="button" class="btn btn-sm" id="btnDetect" disabled>🎯 Dùng vị trí dò được</button>
+              <button type="button" class="btn btn-sm hidden" id="btnApplySuggest">Áp dụng cỡ chữ gợi ý</button>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-ghost btn-block" id="btnReset">↺ Khôi phục cài đặt mặc định</button>
+        </fieldset>
+      </section>
+    </div>
+
+    <div class="col col-right">
+      <!-- ============ KHU VỰC C ============ -->
+      <section class="card" id="secC">
+        <div class="card-head">
+          <span class="badge">C</span>
+          <h2>Xem trước và căn chỉnh</h2>
+          <div class="head-info" id="imgInfo">Chưa có ảnh khung</div>
+        </div>
+
+        <div class="toolbar">
+          <div class="tool">
+            <label for="previewStudent">Tên xem trước</label>
+            <select id="previewStudent">
+              <option value="">— Tên mẫu tự nhập —</option>
+            </select>
+          </div>
+          <div class="tool" id="customNameTool">
+            <label for="previewCustom">Tên mẫu</label>
+            <input type="text" id="previewCustom" value="Nguyễn Thị Ánh Tuyết">
+          </div>
+          <div class="tool">
+            <label for="viewMode">Chế độ xem</label>
+            <select id="viewMode">
+              <option value="frame">Khung gốc + tên</option>
+              <option value="overlay">Chồng ảnh mẫu để đối chiếu</option>
+              <option value="ref">Chỉ ảnh mẫu</option>
+            </select>
+          </div>
+          <div class="tool hidden" id="opacityTool">
+            <label for="overlayOpacity">Độ mờ ảnh mẫu</label>
+            <input type="range" id="overlayOpacity" min="0" max="100" value="50">
+          </div>
+          <label class="tool check"><input type="checkbox" id="showGuides" checked> Đường gióng</label>
+          <div class="tool zoom">
+            <button type="button" class="btn btn-sm" id="zoomOut" title="Thu nhỏ">−</button>
+            <span id="zoomLabel" class="mono">100%</span>
+            <button type="button" class="btn btn-sm" id="zoomIn" title="Phóng to">+</button>
+            <button type="button" class="btn btn-sm" id="zoomFit">Vừa khung</button>
+            <button type="button" class="btn btn-sm" id="zoom100">100%</button>
+          </div>
+        </div>
+
+        <div class="stage" id="stage">
+          <div class="stage-empty" id="stageEmpty">
+            <div class="big" aria-hidden="true">🖼️</div>
+            Tải ảnh khung giấy khen gốc để xem trước
+          </div>
+          <canvas id="previewCanvas" tabindex="0" class="hidden" aria-label="Xem trước giấy khen. Kéo để di chuyển tên, phím mũi tên để tinh chỉnh."></canvas>
+        </div>
+        <div class="stage-foot">
+          <span id="posInfo" class="mono"></span>
+          <span class="muted">Kéo tên để di chuyển · Nhấp đúp để đặt tên tại điểm đó · Phím mũi tên: 1 px (Shift: 10 px)</span>
+        </div>
+        <div class="alert alert-warn hidden" id="previewWarn"></div>
+      </section>
+
+      <!-- ============ KHU VỰC D ============ -->
+      <section class="card" id="secD">
+        <div class="card-head">
+          <span class="badge">D</span>
+          <h2>Tạo giấy khen</h2>
+        </div>
+
+        <div class="stats">
+          <div class="stat"><div class="stat-num" id="statTotal">0</div><div class="stat-label">Tổng số học sinh</div></div>
+          <div class="stat"><div class="stat-num" id="statValid">0</div><div class="stat-label">Hợp lệ</div></div>
+          <div class="stat stat-err"><div class="stat-num" id="statErr">0</div><div class="stat-label">Dòng dữ liệu lỗi</div></div>
+          <div class="stat stat-warn"><div class="stat-num" id="statWarn">0</div><div class="stat-label">Tên quá dài</div></div>
+          <div class="stat stat-ok"><div class="stat-num" id="statDone">0</div><div class="stat-label">Ảnh đã tạo</div></div>
+        </div>
+
+        <div class="btn-row">
+          <button type="button" class="btn" id="btnReadList2">📋 Đọc danh sách học sinh</button>
+          <button type="button" class="btn" id="btnPreview">👁 Xem trước giấy khen</button>
+          <button type="button" class="btn" id="btnDownloadOne">⬇ Tải một ảnh PNG</button>
+        </div>
+
+        <div class="subpanel">
+          <h3>Bước 1 — Tạo thử để kiểm tra</h3>
+          <p class="note">Tạo 3 giấy khen mẫu (học sinh đầu tiên, học sinh có tên dài nhất và học sinh cuối cùng) để kiểm tra trước khi tạo hàng loạt.</p>
+          <button type="button" class="btn" id="btnTest">🧪 Tạo thử 3 giấy khen</button>
+          <div class="test-grid" id="testGrid"></div>
+          <label class="check hidden" id="approveWrap"><input type="checkbox" id="testApprove"> Tôi đã kiểm tra ảnh thử: vị trí, font, cỡ chữ và màu chữ đều đúng.</label>
+        </div>
+
+        <div class="subpanel">
+          <h3>Bước 2 — Tạo toàn bộ và tải về</h3>
+          <div class="btn-row">
+            <button type="button" class="btn btn-primary" id="btnGenerate" disabled>⚙️ Tạo toàn bộ giấy khen</button>
+            <button type="button" class="btn btn-danger" id="btnCancel" disabled>✕ Hủy</button>
+            <button type="button" class="btn btn-success" id="btnZip" disabled>📦 Tải ZIP (giay_khen_hoc_sinh.zip)</button>
+          </div>
+          <div class="progress" aria-label="Tiến trình">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+          <div class="progress-text mono" id="progressText">Chưa bắt đầu</div>
+        </div>
+
+        <div class="alert hidden" id="genMessage"></div>
+
+        <div class="list-head">
+          <h3>Danh sách học sinh</h3>
+          <div class="inline">
+            <input type="search" id="listSearch" placeholder="Tìm mã hoặc tên…">
+            <select id="listFilter">
+              <option value="all">Tất cả</option>
+              <option value="error">Chỉ dòng lỗi</option>
+              <option value="warn">Chỉ cảnh báo</option>
+              <option value="ok">Chỉ hợp lệ</option>
+            </select>
+          </div>
+        </div>
+        <p class="note" id="listSource"></p>
+        <div class="table-wrap">
+          <table class="student-table">
+            <thead>
+              <tr><th>#</th><th>Dòng Excel</th><th>Mã HS (tên file)</th><th>Họ và tên</th><th>Trạng thái</th><th></th></tr>
+            </thead>
+            <tbody id="studentBody">
+              <tr class="empty"><td colspan="6">Chưa có dữ liệu. Tải file Excel rồi bấm “Đọc danh sách học sinh”.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    Website chạy hoàn toàn trong trình duyệt · Không tải dữ liệu học sinh lên Internet · Font Playfair Display (SIL OFL)
+  </footer>
+
+  <div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+  <script src="libs/xlsx.full.min.js"></script>
+  <script src="libs/jszip.min.js"></script>
+  <script src="fonts/playfair-bold-italic.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
